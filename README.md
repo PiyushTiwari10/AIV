@@ -80,6 +80,14 @@ AIV/
    cd AIV
    ```
 
+
+          
+
+   ```bash
+   docker-compose up --build  
+   ```
+            OR
+
 2. **Install backend dependencies**
    ```bash
    cd backend
@@ -95,11 +103,7 @@ AIV/
 4. **Set up environment variables**
    
    Create `.env` file in the backend directory:
-   ```env
-   PORT=4000
-   SESSION_SECRET=your-secret-key
-   DATABASE_URL=./database.sqlite
-   ```
+   Based on.env.example 
 
 5. **Start the backend server**
    ```bash
@@ -116,7 +120,6 @@ AIV/
 7. **Open your browser**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:4000
-   - WebSocket Test: http://localhost:4000/test-websocket.html
 
 ## Usage
 
@@ -197,78 +200,4 @@ AIV/
 - Connection status indicators
 - Fallback to API calls if WebSocket fails
 
-## Development
 
-### Running in Development Mode
-```bash
-# Backend (with hot reload)
-cd backend
-npm run dev
-
-# Frontend (with hot reload)
-cd frontend
-npm run dev
-```
-
-### Building for Production
-```bash
-# Backend
-cd backend
-npm run build
-npm start
-
-# Frontend
-cd frontend
-npm run build
-npm start
-```
-
-
-
-## Troubleshooting
-
-### Common Issues
-
-1. **WebSocket Connection Failed**
-   - Ensure backend is running on port 4000
-   - Check CORS settings in WebSocket server
-   - Verify frontend is connecting to correct URL
-
-2. **Authentication Issues**
-   - Clear browser cookies/session storage
-   - Check session configuration
-   - Verify database is accessible
-
-3. **Comments Not Syncing**
-   - Check WebSocket connection status
-   - Verify event names match between frontend and backend
-   - Check browser console for errors
-
-4. **Typing Indicators Not Working**
-   - Ensure WebSocket connection is active
-   - Check event emission timing
-   - Verify username is being sent correctly
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review the WebSocket test page
-3. Check browser console for errors
-4. Verify all services are running
-
----
-
-**Built with ❤️ using Next.js, Express.js, and Socket.IO** 
