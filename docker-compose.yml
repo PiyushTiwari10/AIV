@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    command: yarn dev
+    environment:
+      DATABASE_HOST: host.docker.internal
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: PASSWORD 
+      DATABASE_NAME: comments
+      REDIS_HOST: redis
+      SESSION_SECRET: your-secret-key-here-make-it-long-and-random
+    ports:
+      - "4000:4000"
+    depends_on:
+      - redis
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    command: npm run dev
+    environment: {}
+      # Add frontend env vars here
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes: []
+      # - ./frontend:/app 

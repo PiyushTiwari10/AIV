@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+        .main-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .typing { background-color: #fff3cd; color: #856404; }
+        .message { background-color: #d1ecf1; color: #0c5460; margin: 5px 0; padding: 10px; border-radius: 5px; }
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 4px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        input, button {
+            margin: 5px;
+            padding: 8px;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        .user-count {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Test Page</h1>
+    
+    <div class="container">
+        <div class="main-content">
+            <div id="status" class="status disconnected">Disconnected</div>
+            
+            <div class="controls">
+                <input type="text" id="username" placeholder="Enter username" value="TestUser">
+                <button onclick="connect()">Connect</button>
+                <button onclick="disconnect()">Disconnect</button>
+            </div>
+            
+            <div class="controls">
+                <input type="text" id="message" placeholder="Type a message">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            
+            <div class="controls">
+                <button onclick="startTyping()">Start Typing</button>
+                <button onclick="stopTyping()">Stop Typing</button>
+            </div>
+            
+            <div id="typingIndicator" class="typing" style="display: none;">Someone is typing...</div>
+            
+            <div id="messages"></div>
+        </div>
+
+        <div class="sidebar">
+            <h3>Active Users</h3>
+            <div class="user-count" id="userCount">0 online</div>
+            <div id="activeUsers"></div>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let currentUsername = '';
+        let activeUsers = [];
+
+        function connect() {
+            currentUsername = document.getElementById('username').value;
+            if (!currentUsername) {
+                alert('Please enter a username');
+                return;
+            }
+
+            socket = io();
+
+            socket.on('connect', () => {
+                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').className = 'status connected';
+                console.log('Connected to WebSocket server');
+                
+                // Join the chat
+                socket.emit('user:join', { username: currentUsername });
+            });
+
+            socket.on('disconnect', () => {
+                document.getElementById('status').textContent = 'Disconnected';
+                document.getElementById('status').className = 'status disconnected';
+                console.log('Disconnected from WebSocket server');
+            });
+
+            socket.on('user:joined', (data) => {
+                addMessage(`${data.username} joined the chat`);
+            });
+
+            socket.on('user:left', (data) => {
+                addMessage(`${data.username} left the chat`);
+            });
+
+            socket.on('user:typing', (data) => {
+                if (data.isTyping) {
+                    document.getElementById('typingIndicator').textContent = `${data.username} is typing...`;
+                    document.getElementById('typingIndicator').style.display = 'block';
+                } else {
+                    document.getElementById('typingIndicator').style.display = 'none';
+                }
+            });
+
+            socket.on('active:users', (users) => {
+                activeUsers = users;
+                updateActiveUsers();
+            });
+
+            socket.on('comment:created', (data) => {
+                addMessage(`New comment from ${data.username}: ${data.content}`);
+            });
+
+            socket.on('comment:updated', (data) => {
+                addMessage(`Comment updated by ${data.username}: ${data.content}`);
+            });
+
+            socket.on('comment:deleted', (data) => {
+                addMessage(`Comment deleted by ${data.username}`);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            if (message && socket) {
+                socket.emit('comment:new', { 
+                    comment: { 
+                        content: message, 
+                        username: currentUsername 
+                    }, 
+                    username: currentUsername 
+                });
+                document.getElementById('message').value = '';
+            }
+        }
+
+        function startTyping() {
+            if (socket) {
+                socket.emit('user:typing', { 
+                    isTyping: true, 
+                    username: currentUsername 
+                });
+            }
+        }
+
+        function stopTyping() {
+            if (socket) {
+                socket.emit('user:typing', { 
+                    isTyping: false, 
+                    username: currentUsername 
+                });
+            }
+        }
+
+        function updateActiveUsers() {
+            const container = document.getElementById('activeUsers');
+            const countElement = document.getElementById('userCount');
+            
+            countElement.textContent = `${activeUsers.length} online`;
+            
+            container.innerHTML = '';
+            
+            if (activeUsers.length === 0) {
+                container.innerHTML = '<p style="color: #666; font-style: italic;">No active users</p>';
+                return;
+            }
+            
+            activeUsers.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'user-avatar';
+                avatar.textContent = user.username.charAt(0).toUpperCase();
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.textContent = user.username;
+                
+                userDiv.appendChild(avatar);
+                userDiv.appendChild(nameDiv);
+                container.appendChild(userDiv);
+            });
+        }
+
+        function addMessage(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Auto-connect on page load
+        window.onload = function() {
+            connect();
+        };
+    </script>
+</body>
+</html> 
