@@ -14,7 +14,7 @@ services:
       DATABASE_HOST: host.docker.internal
       DATABASE_PORT: 5432
       DATABASE_USER: postgres
-      DATABASE_PASSWORD: PASSWORD   
+      DATABASE_PASSWORD: POST2004
       DATABASE_NAME: comments
       REDIS_HOST: redis
       SESSION_SECRET: your-secret-key-here-make-it-long-and-random

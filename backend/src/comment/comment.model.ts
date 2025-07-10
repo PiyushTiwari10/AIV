@@ -6,7 +6,7 @@ export interface Comment {
   user_id: number;
   username?: string;
   created_at: Date;
-  updated_at: Date;
+  updated_at?: Date;
 }
 
 export interface CreateCommentRequest {
@@ -70,7 +70,7 @@ export class CommentModel {
   async update(id: number, content: string): Promise<Comment | null> {
     const query = `
       UPDATE comments 
-      SET content = $1, char_count = $2, updated_at = CURRENT_TIMESTAMP
+      SET content = $1, char_count = $2
       WHERE id = $3
       RETURNING *
     `;
